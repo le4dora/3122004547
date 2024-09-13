@@ -1,8 +1,16 @@
 import sys
-
+# import cProfile
 import jieba
 import re
 import numpy as np
+from collections import Counter
+from functools import lru_cache
+
+
+# 缓存重复分词
+@lru_cache(maxsize=1000)
+def cached_cut(text):
+    return list(jieba.cut(text, cut_all=False))
 
 
 # content = "今天是星期天，天气晴，今天晚上我要去看电影。"
@@ -29,30 +37,37 @@ def outputFile(dist_o, output_file):
 
 # 分词
 def process(content_p, content_p_dif):
-    cut_words = jieba.cut(content_p, cut_all=False)
-    cut_words_dif = jieba.cut(content_p_dif, cut_all=False)
-    seg_list_p = "/".join(cut_words).split("/")
-    seg_list_dif_p = "/".join(cut_words_dif).split("/")
+    seg_list_p = cached_cut(content_p)
+    seg_list_dif_p = cached_cut(content_p_dif)
+
+    # print(seg_list_p)
+    # print(seg_list_dif_p)
+
     return seg_list_p, seg_list_dif_p
 
 
 # 计算余弦相似度
 def cosine_similarity(seg_list_cos, seg_list_dif_cos):
     keywords = list(set(seg_list_cos + seg_list_dif_cos))
-    # 向量化
-    word_vector1 = np.zeros(len(keywords))
-    word_vector2 = np.zeros(len(keywords))
 
-    for i in range(len(keywords)):
-        # 遍历keywords中每个词在句子中的出现次数
-        for j in range(len(seg_list_cos)):
-            if keywords[i] == seg_list_cos[j]:
-                word_vector1[i] += 1
-        for k in range(len(seg_list_dif_cos)):
-            if keywords[i] == seg_list_dif_cos[k]:
-                word_vector2[i] += 1
-    # 求值
-    dist_cos = float(np.dot(word_vector1, word_vector2) / (np.linalg.norm(word_vector1) * np.linalg.norm(word_vector2)))
+    # 计算词频
+    counter1 = Counter(seg_list_cos)
+    counter2 = Counter(seg_list_dif_cos)
+
+    # 向量化
+    word_vector1 = np.array([counter1.get(word, 0) for word in keywords])
+    word_vector2 = np.array([counter2.get(word, 0) for word in keywords])
+
+    # 计算余弦相似度
+    dot_product = np.dot(word_vector1, word_vector2)
+    norm1 = np.linalg.norm(word_vector1)
+    norm2 = np.linalg.norm(word_vector2)
+
+    if norm1 == 0 or norm2 == 0:
+        return 0.0
+
+    dist_cos = float(dot_product / (norm1 * norm2))
+    # print(dist_cos)
     return dist_cos
 
 
@@ -60,15 +75,18 @@ if __name__ == "__main__":
     oriFile = sys.argv[1]
     difFile = sys.argv[2]
     outFile = sys.argv[3]
+
+    # oriFile = "orig.txt"
+    # difFile = "orig_0.8_dis_1.txt"
+    # outFile = "out.txt"
+
     content, content_dif = readFile(oriFile, difFile)
-    # print(content)
-    # print(content_dif)
+
     seg_list, seg_list_dif = process(content, content_dif)
     dist = cosine_similarity(seg_list, seg_list_dif)
     outputFile(dist, outFile)
 
-# print(seg_list)
-# print(seg_list_dif)
-
-# print(word_vector1)
-# print(word_vector2)
+    # cProfile.run('readFile(oriFile, difFile)')
+    # cProfile.run('process(content, content_dif)')
+    # cProfile.run('cosine_similarity(seg_list, seg_list_dif)')
+    # cProfile.run('outputFile(dist, outFile)')
