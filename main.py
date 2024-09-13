@@ -19,13 +19,34 @@ def cached_cut(text):
 
 # 读文件
 def readFile(ori_file, dif_file):
-    with open(ori_file, "r", encoding="utf-8") as f:
-        content_r = f.read()
-    with open(dif_file, "r", encoding="utf-8") as f:
-        content_r_dif = f.read()
-        # 去掉无效字符
-    content_r = re.sub(r'[^\w\s]|\s+', '', content_r)
-    content_r_dif = re.sub(r'[^\w\s]|\s+', '', content_r_dif)
+    content_r = ''
+    content_r_dif = ''
+
+    try:
+        with open(ori_file, "r", encoding="utf-8") as f:
+            content_r = f.read()
+    except FileNotFoundError:
+        print(f"Error: The file {ori_file} was not found.")
+    except IOError:
+        print(f"Error: Cannot read the file {ori_file}.")
+    except UnicodeDecodeError:
+        print(f"Error: Encoding error while reading the file {ori_file}.")
+
+    try:
+        with open(dif_file, "r", encoding="utf-8") as f:
+            content_r_dif = f.read()
+    except FileNotFoundError:
+        print(f"Error: The file {dif_file} was not found.")
+    except IOError:
+        print(f"Error: Cannot read the file {dif_file}.")
+    except UnicodeDecodeError:
+        print(f"Error: Encoding error while reading the file {dif_file}.")
+
+    # 去掉无效字符
+    content_r = re.sub(r'[^\w\s]|\s+|_', '', content_r)
+    content_r_dif = re.sub(r'[^\w\s]|\s+|_', '', content_r_dif)
+    # print(content_r)
+    # print(content_r_dif)
     return content_r, content_r_dif
 
 
