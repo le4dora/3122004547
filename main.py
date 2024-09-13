@@ -10,48 +10,50 @@ import numpy as np
 
 
 # 读文件
-def readFile(oriFile, difFile):
-    with open(oriFile, "r", encoding="utf-8") as f:
-        content = f.read()
-    with open(difFile, "r", encoding="utf-8") as f:
-        content_dif = f.read()
+def readFile(ori_file, dif_file):
+    with open(ori_file, "r", encoding="utf-8") as f:
+        content_r = f.read()
+    with open(dif_file, "r", encoding="utf-8") as f:
+        content_r_dif = f.read()
         # 去掉无效字符
-    content = re.sub(r'[^\w\s]|\s+', '', content)
-    content_dif = re.sub(r'[^\w\s]|\s+', '', content_dif)
-    return content, content_dif
+    content_r = re.sub(r'[^\w\s]|\s+', '', content_r)
+    content_r_dif = re.sub(r'[^\w\s]|\s+', '', content_r_dif)
+    return content_r, content_r_dif
+
 
 # 写文件
-def outputFile(dist,output_file):
-    with open(output_file,"w",encoding="utf-8")as f:
-        f.write(f"{dist:.2f}")
+def outputFile(dist_o, output_file):
+    with open(output_file, "w", encoding="utf-8") as f:
+        f.write(f"{dist_o: .2f}")
+
 
 # 分词
-def process(content, content_dif):
-    cut_words = jieba.cut(content, cut_all=False)
-    cut_words_dif = jieba.cut(content_dif, cut_all=False)
-    seg_list = "/".join(cut_words).split("/")
-    seg_list_dif = "/".join(cut_words_dif).split("/")
-    return seg_list, seg_list_dif
+def process(content_p, content_p_dif):
+    cut_words = jieba.cut(content_p, cut_all=False)
+    cut_words_dif = jieba.cut(content_p_dif, cut_all=False)
+    seg_list_p = "/".join(cut_words).split("/")
+    seg_list_dif_p = "/".join(cut_words_dif).split("/")
+    return seg_list_p, seg_list_dif_p
 
 
 # 计算余弦相似度
-def cosine_similarity(seg_list, seg_list_dif):
-    keywords = list(set(seg_list + seg_list_dif))
+def cosine_similarity(seg_list_cos, seg_list_dif_cos):
+    keywords = list(set(seg_list_cos + seg_list_dif_cos))
     # 向量化
     word_vector1 = np.zeros(len(keywords))
     word_vector2 = np.zeros(len(keywords))
 
     for i in range(len(keywords)):
         # 遍历keywords中每个词在句子中的出现次数
-        for j in range(len(seg_list)):
-            if keywords[i] == seg_list[j]:
+        for j in range(len(seg_list_cos)):
+            if keywords[i] == seg_list_cos[j]:
                 word_vector1[i] += 1
-        for k in range(len(seg_list_dif)):
-            if keywords[i] == seg_list_dif[k]:
+        for k in range(len(seg_list_dif_cos)):
+            if keywords[i] == seg_list_dif_cos[k]:
                 word_vector2[i] += 1
     # 求值
-    dist = float(np.dot(word_vector1, word_vector2) / (np.linalg.norm(word_vector1) * np.linalg.norm(word_vector2)))
-    return dist
+    dist_cos = float(np.dot(word_vector1, word_vector2) / (np.linalg.norm(word_vector1) * np.linalg.norm(word_vector2)))
+    return dist_cos
 
 
 if __name__ == "__main__":
@@ -63,12 +65,10 @@ if __name__ == "__main__":
     # print(content_dif)
     seg_list, seg_list_dif = process(content, content_dif)
     dist = cosine_similarity(seg_list, seg_list_dif)
-    outputFile(dist,outFile)
+    outputFile(dist, outFile)
 
 # print(seg_list)
 # print(seg_list_dif)
 
 # print(word_vector1)
 # print(word_vector2)
-
-
